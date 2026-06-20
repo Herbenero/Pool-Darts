@@ -1,24 +1,78 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Pool Darts</title>
+  <title>Hellcastle Pool Darts</title>
   <style>
-    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
-    .hidden { display: none; }
-    .btn { padding: 10px 16px; margin: 4px; font-size: 16px; }
-    .number-btn { width: 60px; }
-    #players div { margin-bottom: 6px; }
-    #board, #actions { margin-top: 20px; }
-    .active { font-weight: bold; color: teal; }
-    #scoreboard div { margin: 4px 0; }
+    body {
+      font-family: Arial Black, Impact, sans-serif;
+      background: #0d0d0d;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 48px;
+      background: linear-gradient(90deg, #d7263d, #f2c94c);
+      -webkit-background-clip: text;
+      color: transparent;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      padding: 12px 20px;
+      margin: 6px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      background: #2e2e2e;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      background: #d7263d;
+      box-shadow: 0 0 10px #d7263d;
+    }
+
+    .number-btn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      font-size: 20px;
+    }
+
+    #scoreboard div {
+      padding: 8px;
+      margin: 4px 0;
+      background: #2e2e2e;
+      border-left: 6px solid #d7263d;
+    }
+
+    .active-player {
+      border-left: 6px solid #00e6e6 !important;
+      box-shadow: 0 0 10px #00e6e6;
+    }
+
+    .completed {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    #turnDisplay {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: #f2c94c;
+    }
   </style>
 </head>
 <body>
 
-<h1>Pool Darts</h1>
+<h1>HELLCASTLE POOL DARTS</h1>
 
 <div id="setup">
-  <h3>Players</h3>
+  <h3>Add Players</h3>
   <div id="players"></div>
   <button class="btn" onclick="addPlayer()">Add Player</button>
   <br><br>
@@ -30,24 +84,33 @@
 
   <div id="scoreboard"></div>
 
-  <div id="board">
-    <h3>Select Target</h3>
-    <div id="numbers"></div>
-  </div>
+  <h3>Select Target</h3>
+  <div id="numbers"></div>
 
-  <div id="actions">
-    <h3>Multiplier</h3>
-    <button class="btn" onclick="setMultiplier(1)">Single</button>
-    <button class="btn" onclick="setMultiplier(2)">Double</button>
-    <button class="btn" onclick="setMultiplier(3)">Triple</button>
-    <button class="btn" onclick="recordMiss()">Miss</button>
-    <br><br>
-    <button class="btn" onclick="undo()">Undo</button>
-    <button class="btn" onclick="newGame()">New Game</button>
-  </div>
+  <h3>Multiplier</h3>
+  <button class="btn" onclick="setMultiplier(1)">Single</button>
+  <button class="btn" onclick="setMultiplier(2)">Double</button>
+  <button class="btn" onclick="setMultiplier(3)">Triple</button>
+  <button class="btn" onclick="recordMiss()">Miss</button>
+
+  <br><br>
+  <button class="btn" onclick="undo()">Undo</button>
+  <button class="btn" onclick="newGame()">New Game</button>
 
   <h3>Throws This Turn</h3>
   <div id="throws"></div>
+</div>
+<!-- HISTORY SCREEN -->
+<div id="historyScreen" class="hidden">
+  <h2 style="color:#f2c94c;">Match History</h2>
+
+  <div id="historyList" style="
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 10px;
+  "></div>
+
+  <button class="btn" onclick="clearHistory()">Clear History</button>
 </div>
 
 <script>
@@ -73,7 +136,6 @@ function startGame() {
     return;
   }
 
-  // Assign targets: P1 = 1–10, P2 = 11–20
   playerState = [
     { name: players[0], currentTarget: 1, completed: [], mustHitBull: false },
     { name: players[1], currentTarget: 11, completed: [], mustHitBull: false }
@@ -113,24 +175,20 @@ function setMultiplier(m) {
 function recordHit(target) {
   const p = playerState[currentPlayer];
 
-  // Bull win condition
   if (target === "Bull" && p.mustHitBull) {
     history.push({ player: currentPlayer, target, multiplier });
     endGame(p.name);
     return;
   }
 
-  // If they must hit Bull but didn't
   if (p.mustHitBull && target !== "Bull") {
     alert("You must hit Bull to win");
     return;
   }
 
-  // Check correct target
   if (target == p.currentTarget) {
     p.completed.push(target);
 
-    // Move to next target or Bull phase
     if ((p.currentTarget === 10 && currentPlayer === 0) ||
         (p.currentTarget === 20 && currentPlayer === 1)) {
       p.mustHitBull = true;
@@ -166,7 +224,6 @@ function undo() {
   const last = history.pop();
   const p = playerState[last.player];
 
-  // If undoing a hit
   if (last.target !== "Miss") {
     if (last.target === "Bull") {
       p.mustHitBull = true;
@@ -177,7 +234,6 @@ function undo() {
     }
   }
 
-  // Restore turn
   if (last.player === currentPlayer) {
     dartCount--;
   } else {
@@ -212,8 +268,9 @@ function updateScoreboard() {
   const sb = document.getElementById("scoreboard");
   sb.innerHTML = "";
 
-  playerState.forEach(p => {
+  playerState.forEach((p, i) => {
     const div = document.createElement("div");
+    div.className = i === currentPlayer ? "active-player" : "";
     div.innerHTML = `<strong>${p.name}</strong> — Next: ${
       p.mustHitBull ? "Bull" : p.currentTarget
     }`;
@@ -222,14 +279,428 @@ function updateScoreboard() {
 }
 
 function endGame(winner) {
+  saveMatchToHistory(winner);
+
+  if (tournament && tournament.active) {
+    recordTournamentWin(winner);
+  }
+
   alert(winner + " wins the game!");
   newGame();
 }
 
+
+
 function newGame() {
   location.reload();
 }
+  /* ============================
+   MATCH HISTORY SYSTEM
+   ============================ */
+
+function saveMatchToHistory(winner) {
+  const match = {
+    timestamp: new Date().toLocaleString(),
+    players: players,
+    winner: winner,
+    throws: [...history],
+    stats: calculateMatchStats()
+  };
+
+  let stored = JSON.parse(localStorage.getItem("poolDartsHistory") || "[]");
+  stored.push(match);
+  localStorage.setItem("poolDartsHistory", JSON.stringify(stored));
+}
+
+function loadHistory() {
+  const list = document.getElementById("historyList");
+  list.innerHTML = "";
+
+  let stored = JSON.parse(localStorage.getItem("poolDartsHistory") || "[]");
+
+  if (stored.length === 0) {
+    list.innerHTML = "<p>No matches recorded yet.</p>";
+    return;
+  }
+
+  stored.forEach((match, index) => {
+    const div = document.createElement("div");
+    div.style.padding = "10px";
+    div.style.margin = "10px 0";
+    div.style.background = "#2e2e2e";
+    div.style.borderLeft = "6px solid #d7263d";
+    div.style.cursor = "pointer";
+
+    div.innerHTML = `
+      <strong>${match.winner}</strong> won<br>
+      <small>${match.timestamp}</small>
+    `;
+
+    div.onclick = () => showMatchDetails(match);
+    list.appendChild(div);
+  });
+}
+
+function showMatchDetails(match) {
+  const details = `
+    <h3>${match.winner} Wins</h3>
+    <p><strong>Players:</strong> ${match.players.join(" vs ")}</p>
+    <p><strong>Time:</strong> ${match.timestamp}</p>
+    <p><strong>Total Throws:</strong> ${match.throws.length}</p>
+    <p><strong>Accuracy:</strong> ${match.stats.accuracy}%</p>
+    <p><strong>Miss Rate:</strong> ${match.stats.missRate}%</p>
+    <p><strong>Singles/Doubles/Triples:</strong> ${match.stats.singles} / ${match.stats.doubles} / ${match.stats.triples}</p>
+  `;
+
+  document.getElementById("historyList").innerHTML = details;
+}
+
+function clearHistory() {
+  if (confirm("Clear all match history?")) {
+    localStorage.removeItem("poolDartsHistory");
+    loadHistory();
+  }
+}<!-- TOURNAMENT SCREEN -->
+<div id="tournamentScreen" class="hidden">
+  <h2 style="color:#f2c94c;">Tournament Mode</h2>
+
+  <h3>Setup</h3>
+  <label>Mode:</label>
+  <select id="tMode" class="btn">
+    <option value="bestof">Best of X</option>
+    <option value="firstto">First to X</option>
+    <option value="roundrobin">Round Robin</option>
+    <option value="bracket">Bracket</option>
+  </select>
+
+  <br><br>
+
+  <label>Value:</label>
+  <input id="tValue" type="number" value="3" class="btn" style="width:80px;">
+
+  <br><br>
+
+  <button class="btn" onclick="startTournament()">Start Tournament</button>
+
+  <h3>Matches</h3>
+  <div id="tMatchList" style="
+    max-height: 50vh;
+    overflow-y: auto;
+    padding-right: 10px;
+  "></div>
+
+  <div id="tWinner" style="margin-top:20px; font-size:24px; color:#f2c94c;"></div>
+</div>
+/* ============================
+   TOURNAMENT ENGINE
+   ============================ */
+
+let tournament = null;
+
+function startTournament() {
+  const mode = document.getElementById("tMode").value;
+  const value = parseInt(document.getElementById("tValue").value);
+
+  tournament = {
+    mode,
+    value,
+    players: [...players],
+    matches: [],
+    currentMatchIndex: 0,
+    wins: { [players[0]]: 0, [players[1]]: 0 },
+    active: true
+  };
+
+  generateTournamentMatches();
+  renderTournamentMatches();
+}
+
+function generateTournamentMatches() {
+  const p1 = players[0];
+  const p2 = players[1];
+
+  tournament.matches = [];
+
+  if (tournament.mode === "bestof") {
+    const total = tournament.value % 2 === 1 ? tournament.value : tournament.value + 1;
+    for (let i = 0; i < total; i++) {
+      tournament.matches.push({ p1, p2, winner: null });
+    }
+  }
+
+  if (tournament.mode === "firstto") {
+    // We generate matches dynamically as wins accumulate
+    tournament.matches.push({ p1, p2, winner: null });
+  }
+
+  if (tournament.mode === "roundrobin") {
+    for (let i = 0; i < tournament.value; i++) {
+      tournament.matches.push({ p1, p2, winner: null });
+    }
+  }
+
+  if (tournament.mode === "bracket") {
+    // Simple 1v1 bracket
+    tournament.matches.push({ p1, p2, winner: null });
+  }
+}
+
+function renderTournamentMatches() {
+  const list = document.getElementById("tMatchList");
+  list.innerHTML = "";
+
+  const template = document.getElementById("matchCardTemplate");
+
+  tournament.matches.forEach((m, i) => {
+    const card = template.content.cloneNode(true);
+    card.querySelector(".mPlayers").textContent = `${m.p1} vs ${m.p2}`;
+    card.querySelector(".mStatus").textContent =
+      m.winner ? `Winner: ${m.winner}` :
+      i === tournament.currentMatchIndex ? "In Progress" : "Pending";
+
+    list.appendChild(card);
+  });
+}
+
+function recordTournamentWin(winner) {
+  if (!tournament || !tournament.active) return;
+
+  const match = tournament.matches[tournament.currentMatchIndex];
+  match.winner = winner;
+
+  tournament.wins[winner]++;
+
+  // Check win conditions
+  if (tournament.mode === "bestof") {
+    const needed = Math.ceil(tournament.matches.length / 2);
+    if (tournament.wins[winner] >= needed) {
+      endTournament(winner);
+      return;
+    }
+  }
+
+  if (tournament.mode === "firstto") {
+    if (tournament.wins[winner] >= tournament.value) {
+      endTournament(winner);
+      return;
+    }
+    tournament.matches.push({ p1: players[0], p2: players[1], winner: null });
+  }
+
+  if (tournament.mode === "roundrobin") {
+    if (tournament.currentMatchIndex + 1 >= tournament.matches.length) {
+      const finalWinner =
+        tournament.wins[players[0]] > tournament.wins[players[1]]
+          ? players[0]
+          : players[1];
+      endTournament(finalWinner);
+      return;
+    }
+  }
+
+  if (tournament.mode === "bracket") {
+    endTournament(winner);
+    return;
+  }
+
+  // Advance to next match
+  tournament.currentMatchIndex++;
+  renderTournamentMatches();
+}
+
+function endTournament(winner) {
+  tournament.active = false;
+  document.getElementById("tWinner").textContent =
+    `🏆 Tournament Winner: ${winner}`;
+  renderTournamentMatches();
+}
+<!-- STATS SCREEN -->
+<div id="statsScreen" class="hidden">
+  <h2 style="color:#f2c94c;">Stats</h2>
+
+  <h3>Lifetime Stats</h3>
+  <div id="lifetimeStats" style="margin-bottom:20px;"></div>
+
+  <h3>Player Comparison</h3>
+  <div id="playerStats"></div>
+</div>
+/* ============================
+   STATS ENGINE
+   ============================ */
+
+function loadStats() {
+  const lifetimeDiv = document.getElementById("lifetimeStats");
+  const playerDiv = document.getElementById("playerStats");
+
+  const stored = JSON.parse(localStorage.getItem("poolDartsHistory") || "[]");
+
+  if (stored.length === 0) {
+    lifetimeDiv.innerHTML = "<p>No matches played yet.</p>";
+    playerDiv.innerHTML = "";
+    return;
+  }
+
+  // Lifetime aggregates
+  let totalMatches = stored.length;
+  let totalThrows = 0;
+  let totalSingles = 0, totalDoubles = 0, totalTriples = 0, totalMisses = 0;
+  let wins = {};
+
+  stored.forEach(match => {
+    totalThrows += match.throws.length;
+    totalSingles += match.stats.singles;
+    totalDoubles += match.stats.doubles;
+    totalTriples += match.stats.triples;
+    totalMisses += match.stats.misses;
+
+    match.players.forEach(p => {
+      if (!wins[p]) wins[p] = 0;
+    });
+    wins[match.winner] = (wins[match.winner] || 0) + 1;
+  });
+
+  const totalHits = totalSingles + totalDoubles + totalTriples;
+  const accuracy = totalThrows === 0 ? 0 : Math.round((totalHits / totalThrows) * 100);
+  const missRate = totalThrows === 0 ? 0 : Math.round((totalMisses / totalThrows) * 100);
+
+  lifetimeDiv.innerHTML = `
+    <p><strong>Matches Played:</strong> ${totalMatches}</p>
+    <p><strong>Total Throws:</strong> ${totalThrows}</p>
+    <p><strong>Accuracy:</strong> ${accuracy}%</p>
+    <p><strong>Miss Rate:</strong> ${missRate}%</p>
+    <p><strong>Singles/Doubles/Triples:</strong> ${totalSingles} / ${totalDoubles} / ${totalTriples}</p>
+  `;
+
+  // Player comparison
+  let playerStats = {};
+  stored.forEach(match => {
+    match.players.forEach(p => {
+      if (!playerStats[p]) {
+        playerStats[p] = {
+          matches: 0,
+          wins: 0,
+          throws: 0,
+          singles: 0,
+          doubles: 0,
+          triples: 0,
+          misses: 0
+        };
+      }
+      playerStats[p].matches++;
+      if (match.winner === p) playerStats[p].wins++;
+
+      match.throws.forEach(t => {
+        if (t.playerName && t.playerName !== p) return; // optional if you later tag throws
+      });
+
+      // For now, we treat throws as shared; we’ll approximate by splitting evenly
+      const perPlayerThrows = Math.round(match.throws.length / match.players.length);
+      const perPlayerSingles = Math.round(match.stats.singles / match.players.length);
+      const perPlayerDoubles = Math.round(match.stats.doubles / match.players.length);
+      const perPlayerTriples = Math.round(match.stats.triples / match.players.length);
+      const perPlayerMisses = Math.round(match.stats.misses / match.players.length);
+
+      playerStats[p].throws += perPlayerThrows;
+      playerStats[p].singles += perPlayerSingles;
+      playerStats[p].doubles += perPlayerDoubles;
+      playerStats[p].triples += perPlayerTriples;
+      playerStats[p].misses += perPlayerMisses;
+    });
+  });
+
+  playerDiv.innerHTML = "";
+  Object.keys(playerStats).forEach(name => {
+    const ps = playerStats[name];
+    const hits = ps.singles + ps.doubles + ps.triples;
+    const acc = ps.throws === 0 ? 0 : Math.round((hits / ps.throws) * 100);
+
+    const div = document.createElement("div");
+    div.style.padding = "10px";
+    div.style.margin = "10px 0";
+    div.style.background = "#2e2e2e";
+    div.style.borderLeft = "6px solid #f2c94c";
+
+    div.innerHTML = `
+      <strong>${name}</strong><br>
+      Matches: ${ps.matches}, Wins: ${ps.wins}<br>
+      Throws: ${ps.throws}, Accuracy: ${acc}%<br>
+      Singles/Doubles/Triples: ${ps.singles}/${ps.doubles}/${ps.triples}<br>
+      Misses: ${ps.misses}
+    `;
+
+    playerDiv.appendChild(div);
+  });
+}
+
+
+/* ============================
+   MATCH STATS CALCULATION
+   ============================ */
+
+function calculateMatchStats() {
+  let singles = 0, doubles = 0, triples = 0, misses = 0;
+
+  history.forEach(h => {
+    if (h.target === "Miss") misses++;
+    else if (h.multiplier === 1) singles++;
+    else if (h.multiplier === 2) doubles++;
+    else if (h.multiplier === 3) triples++;
+  });
+
+  const total = history.length;
+  const accuracy = total === 0 ? 0 : Math.round(((total - misses) / total) * 100);
+  const missRate = total === 0 ? 0 : Math.round((misses / total) * 100);
+
+  return { singles, doubles, triples, misses, accuracy, missRate };
+}
+
+/* ============================
+   SCREEN SWITCHING
+   ============================ */
+
+function showScreen(screen) {
+  document.getElementById("game").classList.add("hidden");
+  document.getElementById("historyScreen").classList.add("hidden");
+  document.getElementById("tournamentScreen").classList.add("hidden");
+  document.getElementById("statsScreen").classList.add("hidden");
+
+  document.getElementById(screen).classList.remove("hidden");
+
+  if (screen === "historyScreen") loadHistory();
+  if (screen === "statsScreen") loadStats();
+}
+
+
 </script>
+<!-- Bottom Navigation -->
+<div id="navBar" style="
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #2e2e2e;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  border-top: 3px solid #d7263d;
+">
+  <button class="btn" onclick="showScreen('gameScreen')">Game</button>
+  <button class="btn" onclick="showScreen('historyScreen')">History</button>
+  <button class="btn" onclick="showScreen('tournamentScreen')">Tournament</button>
+  <button class="btn" onclick="showScreen('statsScreen')">Stats</button>
+</div>
+<!-- TOURNAMENT MATCH CARD TEMPLATE -->
+<template id="matchCardTemplate">
+  <div style="
+    padding: 10px;
+    margin: 10px 0;
+    background: #2e2e2e;
+    border-left: 6px solid #00e6e6;
+  ">
+    <strong class="mPlayers"></strong><br>
+    <small class="mStatus"></small>
+  </div>
+</template>
 
 </body>
 </html>
