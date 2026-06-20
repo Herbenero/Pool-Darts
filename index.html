@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pool Darts</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+    .hidden { display: none; }
+    .btn { padding: 10px 16px; margin: 4px; font-size: 16px; }
+    .number-btn { width: 60px; }
+    #players div { margin-bottom: 6px; }
+    #board, #actions { margin-top: 20px; }
+    .active { font-weight: bold; color: teal; }
+    #scoreboard div { margin: 4px 0; }
+  </style>
+</head>
+<body>
+
+<h1>Pool Darts</h1>
+
+<div id="setup">
+  <h3>Players</h3>
+  <div id="players"></div>
+  <button class="btn" onclick="addPlayer()">Add Player</button>
+  <br><br>
+  <button class="btn" onclick="startGame()">Start Game</button>
+</div>
+
+<div id="game" class="hidden">
+  <h2 id="turnDisplay"></h2>
+
+  <div id="scoreboard"></div>
+
+  <div id="board">
+    <h3>Select Target</h3>
+    <div id="numbers"></div>
+  </div>
+
+  <div id="actions">
+    <h3>Multiplier</h3>
+    <button class="btn" onclick="setMultiplier(1)">Single</button>
+    <button class="btn" onclick="setMultiplier(2)">Double</button>
+    <button class="btn" onclick="setMultiplier(3)">Triple</button>
+    <button class="btn" onclick="recordMiss()">Miss</button>
+    <br><br>
+    <button class="btn" onclick="undo()">Undo</button>
+    <button class="btn" onclick="newGame()">New Game</button>
+  </div>
+
+  <h3>Throws This Turn</h3>
+  <div id="throws"></div>
+</div>
+
+<script>
+let players = [];
+let playerState = [];
+let currentPlayer = 0;
+let dartCount = 0;
+let multiplier = 1;
+let history = [];
+
+function addPlayer() {
+  const div = document.createElement("div");
+  div.innerHTML = `<input placeholder="Player name">`;
+  document.getElementById("players").appendChild(div);
+}
+
+function startGame() {
+  const inputs = document.querySelectorAll("#players input");
+  players = [...inputs].map(i => i.value.trim()).filter(v => v.length > 0);
+
+  if (players.length !== 2) {
+    alert("Pool Darts requires exactly 2 players");
+    return;
+  }
+
+  // Assign targets: P1 = 1–10, P2 = 11–20
+  playerState = [
+    { name: players[0], currentTarget: 1, completed: [], mustHitBull: false },
+    { name: players[1], currentTarget: 11, completed: [], mustHitBull: false }
+  ];
+
+  document.getElementById("setup").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+
+  buildNumberButtons();
+  updateTurnDisplay();
+  updateScoreboard();
+}
+
+function buildNumberButtons() {
+  const container = document.getElementById("numbers");
+  container.innerHTML = "";
+
+  for (let i = 1; i <= 20; i++) {
+    const btn = document.createElement("button");
+    btn.className = "btn number-btn";
+    btn.textContent = i;
+    btn.onclick = () => recordHit(i);
+    container.appendChild(btn);
+  }
+
+  const bull = document.createElement("button");
+  bull.className = "btn number-btn";
+  bull.textContent = "Bull";
+  bull.onclick = () => recordHit("Bull");
+  container.appendChild(bull);
+}
+
+function setMultiplier(m) {
+  multiplier = m;
+}
+
+function recordHit(target) {
+  const p = playerState[currentPlayer];
+
+  // Bull win condition
+  if (target === "Bull" && p.mustHitBull) {
+    history.push({ player: currentPlayer, target, multiplier });
+    endGame(p.name);
+    return;
+  }
+
+  // If they must hit Bull but didn't
+  if (p.mustHitBull && target !== "Bull") {
+    alert("You must hit Bull to win");
+    return;
+  }
+
+  // Check correct target
+  if (target == p.currentTarget) {
+    p.completed.push(target);
+
+    // Move to next target or Bull phase
+    if ((p.currentTarget === 10 && currentPlayer === 0) ||
+        (p.currentTarget === 20 && currentPlayer === 1)) {
+      p.mustHitBull = true;
+    } else {
+      p.currentTarget++;
+    }
+
+    history.push({ player: currentPlayer, target, multiplier });
+
+    dartCount++;
+    updateThrows();
+    updateScoreboard();
+
+    if (dartCount === 3) nextPlayer();
+    return;
+  }
+
+  alert("Wrong target — hit your current number");
+}
+
+function recordMiss() {
+  history.push({ player: currentPlayer, target: "Miss", multiplier: 0 });
+
+  dartCount++;
+  updateThrows();
+
+  if (dartCount === 3) nextPlayer();
+}
+
+function undo() {
+  if (history.length === 0) return;
+
+  const last = history.pop();
+  const p = playerState[last.player];
+
+  // If undoing a hit
+  if (last.target !== "Miss") {
+    if (last.target === "Bull") {
+      p.mustHitBull = true;
+    } else {
+      p.completed.pop();
+      p.currentTarget = last.target;
+      p.mustHitBull = false;
+    }
+  }
+
+  // Restore turn
+  if (last.player === currentPlayer) {
+    dartCount--;
+  } else {
+    currentPlayer = last.player;
+    dartCount = 2;
+  }
+
+  updateTurnDisplay();
+  updateThrows();
+  updateScoreboard();
+}
+
+function nextPlayer() {
+  dartCount = 0;
+  currentPlayer = (currentPlayer + 1) % 2;
+  updateTurnDisplay();
+  updateThrows();
+}
+
+function updateTurnDisplay() {
+  document.getElementById("turnDisplay").textContent =
+    "Turn: " + players[currentPlayer];
+}
+
+function updateThrows() {
+  const recent = history.filter(h => h.player === currentPlayer).slice(-dartCount);
+  document.getElementById("throws").textContent =
+    recent.map(r => `${r.target} x${r.multiplier}`).join(", ");
+}
+
+function updateScoreboard() {
+  const sb = document.getElementById("scoreboard");
+  sb.innerHTML = "";
+
+  playerState.forEach(p => {
+    const div = document.createElement("div");
+    div.innerHTML = `<strong>${p.name}</strong> — Next: ${
+      p.mustHitBull ? "Bull" : p.currentTarget
+    }`;
+    sb.appendChild(div);
+  });
+}
+
+function endGame(winner) {
+  alert(winner + " wins the game!");
+  newGame();
+}
+
+function newGame() {
+  location.reload();
+}
+</script>
+
+</body>
+</html>
