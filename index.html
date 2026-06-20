@@ -2,33 +2,64 @@
 <html>
 <head>
   <title>Hellcastle Pool Darts</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: Arial Black, Impact, sans-serif;
-      background: #0d0d0d;
-      color: white;
-      padding: 20px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #050608;
+      color: #f5f5f5;
+      padding: 16px;
+      margin: 0 0 90px 0;
     }
 
     h1 {
-      text-align: center;
-      font-size: 48px;
+      font-size: 32px;
+      margin: 0;
       background: linear-gradient(90deg, #d7263d, #f2c94c);
       -webkit-background-clip: text;
       color: transparent;
-      margin-bottom: 20px;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .crest {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: radial-gradient(circle at 30% 20%, #f2c94c, #d7263d 40%, #050608 80%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(0,0,0,0.7);
+    }
+
+    .crest img {
+      width: 80%;
+      height: 80%;
+      object-fit: contain;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #bbbbbb;
     }
 
     .btn {
-      padding: 12px 20px;
-      margin: 6px;
-      font-size: 18px;
+      padding: 10px 16px;
+      margin: 4px;
+      font-size: 16px;
       border: none;
       border-radius: 8px;
-      background: #2e2e2e;
-      color: white;
+      background: #1f1f23;
+      color: #f5f5f5;
       cursor: pointer;
-      transition: 0.2s;
+      transition: 0.15s;
     }
 
     .btn:hover {
@@ -36,93 +67,247 @@
       box-shadow: 0 0 10px #d7263d;
     }
 
+    .btn:active {
+      transform: scale(0.97);
+    }
+
     .number-btn {
-      width: 70px;
-      height: 70px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      font-size: 20px;
+      font-size: 18px;
+      margin: 4px;
     }
 
     #scoreboard div {
       padding: 8px;
       margin: 4px 0;
-      background: #2e2e2e;
-      border-left: 6px solid #d7263d;
+      background: #15151a;
+      border-left: 4px solid #d7263d;
+      border-radius: 4px;
+      font-size: 14px;
     }
 
     .active-player {
-      border-left: 6px solid #00e6e6 !important;
+      border-left-color: #00e6e6 !important;
       box-shadow: 0 0 10px #00e6e6;
     }
 
-    .completed {
-      text-decoration: line-through;
-      opacity: 0.5;
-    }
+    .hidden { display: none; }
 
     #turnDisplay {
-      font-size: 28px;
-      margin-bottom: 10px;
+      font-size: 22px;
+      margin-bottom: 8px;
       color: #f2c94c;
+    }
+
+    #numbers {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 360px;
+    }
+
+    #navBar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #111118;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      border-top: 2px solid #d7263d;
+      z-index: 999;
+    }
+
+    #navBar .btn {
+      flex: 1;
+      margin: 0 4px;
+      font-size: 14px;
+      padding: 8px 4px;
+    }
+
+    .screen {
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hit-flash {
+      animation: hitFlash 0.2s ease-out;
+    }
+
+    @keyframes hitFlash {
+      from { box-shadow: 0 0 0px #00e6e6; }
+      to { box-shadow: 0 0 18px #00e6e6; }
+    }
+
+    .bull-glow {
+      animation: bullGlow 0.6s ease-out;
+    }
+
+    @keyframes bullGlow {
+      0% { box-shadow: 0 0 0px #f2c94c; }
+      50% { box-shadow: 0 0 18px #f2c94c; }
+      100% { box-shadow: 0 0 0px #f2c94c; }
+    }
+
+    input {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: #111118;
+      color: #f5f5f5;
+      width: 200px;
+    }
+
+    label {
+      font-size: 14px;
+      color: #cccccc;
+    }
+
+    select {
+      background: #111118;
+      color: #f5f5f5;
+      border-radius: 6px;
+      border: 1px solid #333;
+      padding: 6px;
+    }
+
+    small {
+      color: #aaaaaa;
     }
   </style>
 </head>
 <body>
 
-<h1>HELLCASTLE POOL DARTS</h1>
-
-<div id="setup">
-  <h3>Add Players</h3>
-  <div id="players"></div>
-  <button class="btn" onclick="addPlayer()">Add Player</button>
-  <br><br>
-  <button class="btn" onclick="startGame()">Start Game</button>
+<div class="app-header">
+  <div class="crest">
+    <!-- Placeholder PNG crest (1x1 transparent). Replace src with your real data URL if you want -->
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2f8AAAAASUVORK5CYII=" alt="Hellcastle Crest">
+  </div>
+  <div>
+    <h1>HELLCASTLE POOL DARTS</h1>
+    <div class="subtitle">P1: 1–10 • P2: 11–20 • Bull to win</div>
+  </div>
 </div>
 
-<div id="game" class="hidden">
-  <h2 id="turnDisplay"></h2>
+<!-- GAME SCREEN -->
+<div id="gameScreen" class="screen">
+  <div id="setup">
+    <h3>Add Players</h3>
+    <div id="players"></div>
+    <button class="btn" onclick="addPlayer()">Add Player</button>
+    <br><br>
+    <button class="btn" onclick="startGame()">Start Game</button>
+  </div>
 
-  <div id="scoreboard"></div>
+  <div id="game" class="hidden">
+    <h2 id="turnDisplay"></h2>
 
-  <h3>Select Target</h3>
-  <div id="numbers"></div>
+    <div id="scoreboard"></div>
 
-  <h3>Multiplier</h3>
-  <button class="btn" onclick="setMultiplier(1)">Single</button>
-  <button class="btn" onclick="setMultiplier(2)">Double</button>
-  <button class="btn" onclick="setMultiplier(3)">Triple</button>
-  <button class="btn" onclick="recordMiss()">Miss</button>
+    <h3>Select Target</h3>
+    <div id="numbers"></div>
 
-  <br><br>
-  <button class="btn" onclick="undo()">Undo</button>
-  <button class="btn" onclick="newGame()">New Game</button>
+    <h3>Multiplier</h3>
+    <button class="btn" onclick="setMultiplier(1)">Single</button>
+    <button class="btn" onclick="setMultiplier(2)">Double</button>
+    <button class="btn" onclick="setMultiplier(3)">Triple</button>
+    <button class="btn" onclick="recordMiss()">Miss</button>
 
-  <h3>Throws This Turn</h3>
-  <div id="throws"></div>
+    <br><br>
+    <button class="btn" onclick="undo()">Undo</button>
+    <button class="btn" onclick="newGame()">New Game</button>
+
+    <h3>Throws This Turn</h3>
+    <div id="throws"></div>
+  </div>
 </div>
+
 <!-- HISTORY SCREEN -->
-<div id="historyScreen" class="hidden">
+<div id="historyScreen" class="hidden screen">
   <h2 style="color:#f2c94c;">Match History</h2>
 
-  <div id="historyList" style="
-    max-height: 60vh;
-    overflow-y: auto;
-    padding-right: 10px;
-  "></div>
+  <div id="historyList" style="max-height: 60vh; overflow-y: auto; padding-right: 6px;"></div>
 
   <button class="btn" onclick="clearHistory()">Clear History</button>
 </div>
 
+<!-- TOURNAMENT SCREEN -->
+<div id="tournamentScreen" class="hidden screen">
+  <h2 style="color:#f2c94c;">Tournament Mode</h2>
+
+  <h3>Setup</h3>
+  <label>Mode:</label>
+  <select id="tMode">
+    <option value="bestof">Best of X</option>
+    <option value="firstto">First to X</option>
+    <option value="roundrobin">Round Robin</option>
+    <option value="bracket">Bracket</option>
+  </select>
+
+  <br><br>
+
+  <label>Value:</label>
+  <input id="tValue" type="number" value="3" style="width:80px;">
+
+  <br><br>
+
+  <button class="btn" onclick="startTournament()">Start Tournament</button>
+
+  <h3>Matches</h3>
+  <div id="tMatchList" style="max-height: 50vh; overflow-y: auto; padding-right: 6px;"></div>
+
+  <div id="tWinner" style="margin-top:20px; font-size:20px; color:#f2c94c;"></div>
+</div>
+
+<!-- STATS SCREEN -->
+<div id="statsScreen" class="hidden screen">
+  <h2 style="color:#f2c94c;">Stats</h2>
+
+  <h3>Lifetime Stats</h3>
+  <div id="lifetimeStats" style="margin-bottom:20px;"></div>
+
+  <h3>Player Comparison</h3>
+  <div id="playerStats"></div>
+</div>
+
+<!-- MATCH CARD TEMPLATE -->
+<template id="matchCardTemplate">
+  <div style="padding: 10px; margin: 10px 0; background: #15151a; border-left: 4px solid #00e6e6; border-radius:4px;">
+    <strong class="mPlayers"></strong><br>
+    <small class="mStatus"></small>
+  </div>
+</template>
+
+<!-- BOTTOM NAV -->
+<div id="navBar">
+  <button class="btn" onclick="showScreen('gameScreen')">Game</button>
+  <button class="btn" onclick="showScreen('historyScreen')">History</button>
+  <button class="btn" onclick="showScreen('tournamentScreen')">Tournament</button>
+  <button class="btn" onclick="showScreen('statsScreen')">Stats</button>
+</div>
+
 <script>
+/* ============================
+   CORE GAME LOGIC
+   ============================ */
+
 let players = [];
 let playerState = [];
 let currentPlayer = 0;
 let dartCount = 0;
 let multiplier = 1;
 let history = [];
+let tournament = null;
 
 function addPlayer() {
   const div = document.createElement("div");
+  div.style.marginBottom = "6px";
   div.innerHTML = `<input placeholder="Player name">`;
   document.getElementById("players").appendChild(div);
 }
@@ -164,6 +349,7 @@ function buildNumberButtons() {
   const bull = document.createElement("button");
   bull.className = "btn number-btn";
   bull.textContent = "Bull";
+  bull.id = "bullButton";
   bull.onclick = () => recordHit("Bull");
   container.appendChild(bull);
 }
@@ -176,7 +362,9 @@ function recordHit(target) {
   const p = playerState[currentPlayer];
 
   if (target === "Bull" && p.mustHitBull) {
-    history.push({ player: currentPlayer, target, multiplier });
+    history.push({ player: currentPlayer, playerName: players[currentPlayer], target, multiplier });
+    playBullSound();
+    bullGlow();
     endGame(p.name);
     return;
   }
@@ -196,7 +384,9 @@ function recordHit(target) {
       p.currentTarget++;
     }
 
-    history.push({ player: currentPlayer, target, multiplier });
+    history.push({ player: currentPlayer, playerName: players[currentPlayer], target, multiplier });
+    playHitSound();
+    hitFlash();
 
     dartCount++;
     updateThrows();
@@ -210,7 +400,8 @@ function recordHit(target) {
 }
 
 function recordMiss() {
-  history.push({ player: currentPlayer, target: "Miss", multiplier: 0 });
+  history.push({ player: currentPlayer, playerName: players[currentPlayer], target: "Miss", multiplier: 0 });
+  playMissSound();
 
   dartCount++;
   updateThrows();
@@ -254,6 +445,7 @@ function nextPlayer() {
 }
 
 function updateTurnDisplay() {
+  if (!players.length) return;
   document.getElementById("turnDisplay").textContent =
     "Turn: " + players[currentPlayer];
 }
@@ -278,23 +470,11 @@ function updateScoreboard() {
   });
 }
 
-function endGame(winner) {
-  saveMatchToHistory(winner);
-
-  if (tournament && tournament.active) {
-    recordTournamentWin(winner);
-  }
-
-  alert(winner + " wins the game!");
-  newGame();
-}
-
-
-
 function newGame() {
   location.reload();
 }
-  /* ============================
+
+/* ============================
    MATCH HISTORY SYSTEM
    ============================ */
 
@@ -323,13 +503,14 @@ function loadHistory() {
     return;
   }
 
-  stored.forEach((match, index) => {
+  stored.forEach((match) => {
     const div = document.createElement("div");
     div.style.padding = "10px";
     div.style.margin = "10px 0";
-    div.style.background = "#2e2e2e";
-    div.style.borderLeft = "6px solid #d7263d";
+    div.style.background = "#15151a";
+    div.style.borderLeft = "4px solid #d7263d";
     div.style.cursor = "pointer";
+    div.style.borderRadius = "4px";
 
     div.innerHTML = `
       <strong>${match.winner}</strong> won<br>
@@ -360,46 +541,37 @@ function clearHistory() {
     localStorage.removeItem("poolDartsHistory");
     loadHistory();
   }
-}<!-- TOURNAMENT SCREEN -->
-<div id="tournamentScreen" class="hidden">
-  <h2 style="color:#f2c94c;">Tournament Mode</h2>
+}
 
-  <h3>Setup</h3>
-  <label>Mode:</label>
-  <select id="tMode" class="btn">
-    <option value="bestof">Best of X</option>
-    <option value="firstto">First to X</option>
-    <option value="roundrobin">Round Robin</option>
-    <option value="bracket">Bracket</option>
-  </select>
+function calculateMatchStats() {
+  let singles = 0, doubles = 0, triples = 0, misses = 0;
 
-  <br><br>
+  history.forEach(h => {
+    if (h.target === "Miss") misses++;
+    else if (h.multiplier === 1) singles++;
+    else if (h.multiplier === 2) doubles++;
+    else if (h.multiplier === 3) triples++;
+  });
 
-  <label>Value:</label>
-  <input id="tValue" type="number" value="3" class="btn" style="width:80px;">
+  const total = history.length;
+  const accuracy = total === 0 ? 0 : Math.round(((total - misses) / total) * 100);
+  const missRate = total === 0 ? 0 : Math.round((misses / total) * 100);
 
-  <br><br>
+  return { singles, doubles, triples, misses, accuracy, missRate };
+}
 
-  <button class="btn" onclick="startTournament()">Start Tournament</button>
-
-  <h3>Matches</h3>
-  <div id="tMatchList" style="
-    max-height: 50vh;
-    overflow-y: auto;
-    padding-right: 10px;
-  "></div>
-
-  <div id="tWinner" style="margin-top:20px; font-size:24px; color:#f2c94c;"></div>
-</div>
 /* ============================
    TOURNAMENT ENGINE
    ============================ */
 
-let tournament = null;
-
 function startTournament() {
+  if (players.length !== 2) {
+    alert("Start a game and set players first.");
+    return;
+  }
+
   const mode = document.getElementById("tMode").value;
-  const value = parseInt(document.getElementById("tValue").value);
+  const value = parseInt(document.getElementById("tValue").value) || 1;
 
   tournament = {
     mode,
@@ -429,7 +601,6 @@ function generateTournamentMatches() {
   }
 
   if (tournament.mode === "firstto") {
-    // We generate matches dynamically as wins accumulate
     tournament.matches.push({ p1, p2, winner: null });
   }
 
@@ -440,7 +611,6 @@ function generateTournamentMatches() {
   }
 
   if (tournament.mode === "bracket") {
-    // Simple 1v1 bracket
     tournament.matches.push({ p1, p2, winner: null });
   }
 }
@@ -470,7 +640,6 @@ function recordTournamentWin(winner) {
 
   tournament.wins[winner]++;
 
-  // Check win conditions
   if (tournament.mode === "bestof") {
     const needed = Math.ceil(tournament.matches.length / 2);
     if (tournament.wins[winner] >= needed) {
@@ -503,7 +672,6 @@ function recordTournamentWin(winner) {
     return;
   }
 
-  // Advance to next match
   tournament.currentMatchIndex++;
   renderTournamentMatches();
 }
@@ -514,16 +682,7 @@ function endTournament(winner) {
     `🏆 Tournament Winner: ${winner}`;
   renderTournamentMatches();
 }
-<!-- STATS SCREEN -->
-<div id="statsScreen" class="hidden">
-  <h2 style="color:#f2c94c;">Stats</h2>
 
-  <h3>Lifetime Stats</h3>
-  <div id="lifetimeStats" style="margin-bottom:20px;"></div>
-
-  <h3>Player Comparison</h3>
-  <div id="playerStats"></div>
-</div>
 /* ============================
    STATS ENGINE
    ============================ */
@@ -540,11 +699,9 @@ function loadStats() {
     return;
   }
 
-  // Lifetime aggregates
   let totalMatches = stored.length;
   let totalThrows = 0;
   let totalSingles = 0, totalDoubles = 0, totalTriples = 0, totalMisses = 0;
-  let wins = {};
 
   stored.forEach(match => {
     totalThrows += match.throws.length;
@@ -552,11 +709,6 @@ function loadStats() {
     totalDoubles += match.stats.doubles;
     totalTriples += match.stats.triples;
     totalMisses += match.stats.misses;
-
-    match.players.forEach(p => {
-      if (!wins[p]) wins[p] = 0;
-    });
-    wins[match.winner] = (wins[match.winner] || 0) + 1;
   });
 
   const totalHits = totalSingles + totalDoubles + totalTriples;
@@ -571,7 +723,6 @@ function loadStats() {
     <p><strong>Singles/Doubles/Triples:</strong> ${totalSingles} / ${totalDoubles} / ${totalTriples}</p>
   `;
 
-  // Player comparison
   let playerStats = {};
   stored.forEach(match => {
     match.players.forEach(p => {
@@ -586,25 +737,22 @@ function loadStats() {
           misses: 0
         };
       }
+    });
+
+    match.players.forEach(p => {
       playerStats[p].matches++;
       if (match.winner === p) playerStats[p].wins++;
+    });
 
-      match.throws.forEach(t => {
-        if (t.playerName && t.playerName !== p) return; // optional if you later tag throws
-      });
+    match.throws.forEach(t => {
+      const name = t.playerName || match.players[t.player] || null;
+      if (!name || !playerStats[name]) return;
 
-      // For now, we treat throws as shared; we’ll approximate by splitting evenly
-      const perPlayerThrows = Math.round(match.throws.length / match.players.length);
-      const perPlayerSingles = Math.round(match.stats.singles / match.players.length);
-      const perPlayerDoubles = Math.round(match.stats.doubles / match.players.length);
-      const perPlayerTriples = Math.round(match.stats.triples / match.players.length);
-      const perPlayerMisses = Math.round(match.stats.misses / match.players.length);
-
-      playerStats[p].throws += perPlayerThrows;
-      playerStats[p].singles += perPlayerSingles;
-      playerStats[p].doubles += perPlayerDoubles;
-      playerStats[p].triples += perPlayerTriples;
-      playerStats[p].misses += perPlayerMisses;
+      playerStats[name].throws++;
+      if (t.target === "Miss") playerStats[name].misses++;
+      else if (t.multiplier === 1) playerStats[name].singles++;
+      else if (t.multiplier === 2) playerStats[name].doubles++;
+      else if (t.multiplier === 3) playerStats[name].triples++;
     });
   });
 
@@ -617,8 +765,9 @@ function loadStats() {
     const div = document.createElement("div");
     div.style.padding = "10px";
     div.style.margin = "10px 0";
-    div.style.background = "#2e2e2e";
-    div.style.borderLeft = "6px solid #f2c94c";
+    div.style.background = "#15151a";
+    div.style.borderLeft = "4px solid #f2c94c";
+    div.style.borderRadius = "4px";
 
     div.innerHTML = `
       <strong>${name}</strong><br>
@@ -632,34 +781,12 @@ function loadStats() {
   });
 }
 
-
-/* ============================
-   MATCH STATS CALCULATION
-   ============================ */
-
-function calculateMatchStats() {
-  let singles = 0, doubles = 0, triples = 0, misses = 0;
-
-  history.forEach(h => {
-    if (h.target === "Miss") misses++;
-    else if (h.multiplier === 1) singles++;
-    else if (h.multiplier === 2) doubles++;
-    else if (h.multiplier === 3) triples++;
-  });
-
-  const total = history.length;
-  const accuracy = total === 0 ? 0 : Math.round(((total - misses) / total) * 100);
-  const missRate = total === 0 ? 0 : Math.round((misses / total) * 100);
-
-  return { singles, doubles, triples, misses, accuracy, missRate };
-}
-
 /* ============================
    SCREEN SWITCHING
    ============================ */
 
 function showScreen(screen) {
-  document.getElementById("game").classList.add("hidden");
+  document.getElementById("gameScreen").classList.add("hidden");
   document.getElementById("historyScreen").classList.add("hidden");
   document.getElementById("tournamentScreen").classList.add("hidden");
   document.getElementById("statsScreen").classList.add("hidden");
@@ -670,37 +797,83 @@ function showScreen(screen) {
   if (screen === "statsScreen") loadStats();
 }
 
+/* ============================
+   END GAME
+   ============================ */
 
+function endGame(winner) {
+  saveMatchToHistory(winner);
+
+  if (tournament && tournament.active) {
+    recordTournamentWin(winner);
+  }
+
+  playWinSound();
+  alert(winner + " wins the game!");
+  newGame();
+}
+
+/* ============================
+   SIMPLE SOUND EFFECTS (WEB AUDIO)
+   ============================ */
+
+function playTone(freq, duration, type = "sine", volume = 0.2) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.value = volume;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => {
+      osc.stop();
+      ctx.close();
+    }, duration);
+  } catch (e) {
+    // audio not critical
+  }
+}
+
+function playHitSound() {
+  playTone(880, 80, "square", 0.15);
+}
+
+function playMissSound() {
+  playTone(220, 120, "sawtooth", 0.12);
+}
+
+function playBullSound() {
+  playTone(660, 80, "sine", 0.18);
+  setTimeout(() => playTone(990, 120, "sine", 0.18), 90);
+}
+
+function playWinSound() {
+  playTone(523, 120, "triangle", 0.2);
+  setTimeout(() => playTone(659, 120, "triangle", 0.2), 130);
+  setTimeout(() => playTone(784, 160, "triangle", 0.2), 260);
+}
+
+/* ============================
+   ANIMATIONS HELPERS
+   ============================ */
+
+function hitFlash() {
+  const board = document.getElementById("numbers");
+  if (!board) return;
+  board.classList.add("hit-flash");
+  setTimeout(() => board.classList.remove("hit-flash"), 200);
+}
+
+function bullGlow() {
+  const bull = document.getElementById("bullButton");
+  if (!bull) return;
+  bull.classList.add("bull-glow");
+  setTimeout(() => bull.classList.remove("bull-glow"), 600);
+}
 </script>
-<!-- Bottom Navigation -->
-<div id="navBar" style="
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: #2e2e2e;
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 0;
-  border-top: 3px solid #d7263d;
-">
-  <button class="btn" onclick="showScreen('gameScreen')">Game</button>
-  <button class="btn" onclick="showScreen('historyScreen')">History</button>
-  <button class="btn" onclick="showScreen('tournamentScreen')">Tournament</button>
-  <button class="btn" onclick="showScreen('statsScreen')">Stats</button>
-</div>
-<!-- TOURNAMENT MATCH CARD TEMPLATE -->
-<template id="matchCardTemplate">
-  <div style="
-    padding: 10px;
-    margin: 10px 0;
-    background: #2e2e2e;
-    border-left: 6px solid #00e6e6;
-  ">
-    <strong class="mPlayers"></strong><br>
-    <small class="mStatus"></small>
-  </div>
-</template>
 
 </body>
 </html>
