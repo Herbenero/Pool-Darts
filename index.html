@@ -495,15 +495,35 @@ function updateScoreboard() {
   playerState.forEach((p, i) => {
     const div = document.createElement("div");
     div.className = i === currentPlayer ? "active-player" : "";
-    div.innerHTML = `<strong>${p.name}</strong> — Next: ${
-      p.mustHitBull ? "Bull" : p.currentTarget
-    }`;
+
+    const balls = Object.entries(p.targets)
+      .map(([num, hits]) => `${num}:${hits}`)
+      .join(" • ");
+
+    div.innerHTML = `
+      <strong>${p.name}</strong><br>
+      Balls: ${balls}<br>
+      8-ball: ${p.eightBall}/3
+    `;
+
     sb.appendChild(div);
   });
 }
 
+
 function newGame() {
   location.reload();
+}
+function endGame(winner) {
+  saveMatchToHistory(winner);
+
+  if (tournament && tournament.active) {
+    recordTournamentWin(winner);
+  }
+
+  playWinSound();
+  alert(winner + " wins the game!");
+  newGame();
 }
 
 /* ============================
