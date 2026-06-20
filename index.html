@@ -322,17 +322,18 @@ function startGame() {
   }
 
   playerState = [
-    { name: players[0], currentTarget: 1, completed: [], mustHitBull: false },
-    { name: players[1], currentTarget: 11, completed: [], mustHitBull: false }
-  ];
+  {
+    name: players[0],
+    targets: { 1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0 },
+    eightBall: 0
+  },
+  {
+    name: players[1],
+    targets: { 11:0,12:0,13:0,14:0,15:0,16:0,17:0,18:0,19:0,20:0 },
+    eightBall: 0
+  }
+];
 
-  document.getElementById("setup").classList.add("hidden");
-  document.getElementById("game").classList.remove("hidden");
-
-  buildNumberButtons();
-  updateTurnDisplay();
-  updateScoreboard();
-}
 
 function buildNumberButtons() {
   const container = document.getElementById("numbers");
@@ -360,43 +361,65 @@ function setMultiplier(m) {
 
 function recordHit(target) {
   const p = playerState[currentPlayer];
+  const opp = playerState[(currentPlayer + 1) % 2];
 
-  if (target === "Bull" && p.mustHitBull) {
-    history.push({ player: currentPlayer, playerName: players[currentPlayer], target, multiplier });
-    playBullSound();
-    bullGlow();
-    endGame(p.name);
-    return;
-  }
+  // Bull (8-ball)
+  if (target === "Bull") {
+    // Can only shoot 8-ball if all your balls are pocketed
+    const allPocketed = Object.values(p.targets).every(v => v >= 3);
 
-  if (p.mustHitBull && target !== "Bull") {
-    alert("You must hit Bull to win");
-    return;
-  }
-
-  if (target == p.currentTarget) {
-    p.completed.push(target);
-
-    if ((p.currentTarget === 10 && currentPlayer === 0) ||
-        (p.currentTarget === 20 && currentPlayer === 1)) {
-      p.mustHitBull = true;
-    } else {
-      p.currentTarget++;
+    if (!allPocketed) {
+      alert("8-ball not in play yet");
+      return;
     }
 
-    history.push({ player: currentPlayer, playerName: players[currentPlayer], target, multiplier });
+    p.eightBall++;
+
+    history.push({ player: currentPlayer, playerName: p.name, target, multiplier });
+
+    playBullSound();
+    bullGlow();
+
+    if (p.eightBall >= 3) {
+      endGame(p.name);
+      return;
+    }
+
+    advanceThrow();
+    return;
+  }
+
+  // Convert target to number
+  const t = Number(target);
+
+  // Determine if this is your ball or opponent's
+  const isYours = p.targets.hasOwnProperty(t);
+  const isOpps = opp.targets.hasOwnProperty(t);
+
+  if (!isYours && !isOpps) {
+    alert("Invalid target");
+    return;
+  }
+
+  // SCRATCH — hit opponent’s ball
+  if (isOpps) {
+    history.push({ player: currentPlayer, playerName: p.name, target, multiplier });
+    playMissSound();
+    nextPlayer(); // immediate turn switch
+    return;
+  }
+
+  // Hit your own ball
+  if (isYours) {
+    p.targets[t] = Math.min(3, p.targets[t] + 1);
+
+    history.push({ player: currentPlayer, playerName: p.name, target, multiplier });
     playHitSound();
     hitFlash();
 
-    dartCount++;
-    updateThrows();
-    updateScoreboard();
-
-    if (dartCount === 3) nextPlayer();
+    advanceThrow();
     return;
   }
-
-  alert("Wrong target — hit your current number");
 }
 
 function recordMiss() {
@@ -431,6 +454,15 @@ function undo() {
     currentPlayer = last.player;
     dartCount = 2;
   }
+function advanceThrow() {
+  dartCount++;
+  updateThrows();
+  updateScoreboard();
+
+  if (dartCount >= 3) {
+    nextPlayer();
+  }
+}
 
   updateTurnDisplay();
   updateThrows();
@@ -801,12 +833,11 @@ function showScreen(screen) {
    END GAME
    ============================ */
 
-function endGame(winner) {
-  saveMatchToHistory(winner);
+function checkWin(p) {
+  const allPocketed = Object.values(p.targets).every(v => v >= 3);
+  return allPocketed && p.eightBall >= 3;
+}
 
-  if (tournament && tournament.active) {
-    recordTournamentWin(winner);
-  }
 
   playWinSound();
   alert(winner + " wins the game!");
