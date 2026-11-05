@@ -1,605 +1,580 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pool Darts</title>
-    <style>
-        :root {
-            --bg-color: #0f172a;
-            --panel-bg: #1e293b;
-            --text-color: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #38bdf8;
-            --accent-hover: #0ea5e9;
-            --border: #334155;
-            --danger: #ef4444;
-            --success: #22c55e;
-            --quad-color: #a855f7;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pool Darts</title> <meta name="description" content="Pool Darts scorekeeper app for multiple players." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1117;
+      --bg-2: #111a22;
+      --panel: #121e28cc;
+      --panel-solid: #13212d;
+      --panel-soft: #0f1820;
+      --line: #2a3a48;
+      --text: #ecf4fb;
+      --muted: #9fb1c2;
+      --gold: #f7c65f;
+      --cyan: #6ae8ff;
+      --red: #ff6c6c;
+      --green: #7ef0ae;
+      --purple: #d8b4fe;
+      --shadow: 0 20px 60px rgba(0, 0, 0, .35);
+      --radius: 22px;
+      --radius-sm: 14px;
+      --max: 1280px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; color: var(--text);
+      background: radial-gradient(circle at 15% 20%, rgba(106, 232, 255, .10), transparent 28%),
+                  radial-gradient(circle at 85% 10%, rgba(247, 198, 95, .10), transparent 24%),
+                  radial-gradient(circle at 50% 120%, rgba(126, 240, 174, .08), transparent 30%),
+                  linear-gradient(180deg, #081018 0%, #0b1117 100%);
+      font-family: "Inter", sans-serif; min-height: 100vh; overflow-x: hidden;
+    }
+    .shell { width: min(var(--max), calc(100% - 28px)); margin: 0 auto; padding: 22px 0 40px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 10px 0 18px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 26px; }
+    .brand-wrap { display: flex; align-items: center; gap: 14px; }
+    .brand-badge { width: 54px; height: 54px; border-radius: 16px; background: #0c171f; border: 1px solid rgba(255,255,255,.12); display: grid; place-items: center; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+    .brand-badge::before { content: "8"; font-family: "Bebas Neue", sans-serif; font-size: 2rem; color: var(--gold); }
+    .brand h1 { margin: 0; font-family: "Bebas Neue", sans-serif; font-size: clamp(2.1rem, 4vw, 3.8rem); line-height: .9; font-weight: 400; }
+    .brand p { margin: 4px 0 0; color: var(--muted); font-size: .95rem; max-width: 44ch; }
+    .status-chip { padding: 10px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); color: var(--muted); font-weight: 700; white-space: nowrap; }
+    .layout { display: grid; grid-template-columns: 1.15fr .85fr; gap: 22px; align-items: start; }
+    .panel { background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)); border: 1px solid rgba(255,255,255,.10); border-radius: var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(14px); overflow: hidden; }
+    .panel-inner { padding: 22px; }
+    .hidden { display: none !important; }
+    
+    /* Setup Styles */
+    .field { margin-bottom: 14px; }
+    .field label { display: block; margin-bottom: 8px; color: var(--muted); font-size: .9rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
+    .field input, .field select { width: 100%; padding: 14px 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,.12); background: #0d171f; color: var(--text); font: inherit; outline: none; }
+    .field input:focus, .field select:focus { border-color: rgba(106,232,255,.55); box-shadow: 0 0 0 4px rgba(106,232,255,.12); }
+    .player-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    
+    .actions { display: flex; gap: 12px; margin-top: 18px; }
+    button { border: 0; font: inherit; cursor: pointer; color: var(--text); transition: transform .18s ease, background .18s ease; }
+    button:hover { transform: translateY(-2px); }
+    button:active { transform: translateY(0) scale(.98); }
+    .btn-primary { padding: 15px 20px; border-radius: 16px; background: linear-gradient(135deg, var(--gold), #f0a94c); color: #111; font-weight: 900; box-shadow: 0 12px 28px rgba(247,198,95,.28); width: 100%; }
+    .btn-secondary { padding: 14px 18px; border-radius: 16px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.10); font-weight: 800; }
+    
+    /* Game Shell */
+    .game-shell { display: grid; grid-template-columns: 1fr .95fr; gap: 22px; }
+    .game-left { display: grid; gap: 22px; }
+    .meta-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .meta { padding: 16px; border-radius: 18px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
+    .meta .k { display: block; color: var(--muted); text-transform: uppercase; font-size: .72rem; letter-spacing: .14em; font-weight: 800; margin-bottom: 8px; }
+    .meta .v { font-family: "Bebas Neue", sans-serif; font-size: 2rem; line-height: 1; }
+    
+    .multiplier-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 12px; margin-top: 18px; }
+    .pill { padding: 16px 14px; border-radius: 18px; background: #0d171f; border: 1px solid rgba(255,255,255,.08); text-align: center; font-weight: 900; text-transform: uppercase; }
+    .pill.active { background: linear-gradient(135deg, rgba(106,232,255,.18), rgba(106,232,255,.08)); border-color: rgba(106,232,255,.45); }
+    .pill.quad.active { background: linear-gradient(135deg, rgba(216,180,254,.25), rgba(216,180,254,.1)); border-color: var(--purple); color: var(--purple); }
 
-        body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
+    .numbers { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 18px; }
+    .num-btn { min-height: 70px; border-radius: 18px; background: #0c151d; border: 1px solid rgba(255,255,255,.08); font-family: "Bebas Neue", sans-serif; font-size: 2rem; }
+    .num-btn.special { color: var(--gold); border-color: rgba(247,198,95,.28); }
+    
+    .bottom-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 18px; }
+    .danger { background: rgba(255,108,108,.15); border: 1px solid rgba(255,108,108,.28); }
+    .success { background: rgba(126,240,174,.15); border: 1px solid rgba(126,240,174,.28); }
+    
+    .scoreboard-head h3 { margin: 0; font-family: "Bebas Neue", sans-serif; font-size: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,.08); text-align: center; }
+    th { color: var(--muted); font-size: .78rem; text-transform: uppercase; }
+    td.target-col { font-family: "Bebas Neue", sans-serif; font-size: 1.4rem; color: var(--text); }
+    .marks { font-family: "Bebas Neue", sans-serif; font-size: 1.5rem; }
+    
+    .announce { margin-top: 18px; padding: 16px; border-radius: 16px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); font-weight: 700; }
+    .announce.warn { color: #ffd9d9; background: rgba(255,108,108,.08); }
+    .announce.good { color: #dbffe8; background: rgba(126,240,174,.08); }
 
-        .container {
-            width: 100%;
-            max-width: 900px;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 16px;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 1.75rem;
-            color: var(--accent);
-        }
-
-        .panel {
-            background-color: var(--panel-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-
-        .field {
-            margin-bottom: 16px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--text-muted);
-        }
-
-        select, input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 10px 14px;
-            background-color: var(--bg-color);
-            border: 1px solid var(--border);
-            color: var(--text-color);
-            border-radius: 8px;
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
-
-        select:focus, input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .btn {
-            background-color: var(--accent);
-            color: #0f172a;
-            border: none;
-            padding: 12px 20px;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            width: 100%;
-            transition: background-color 0.2s;
-        }
-
-        .btn:hover {
-            background-color: var(--accent-hover);
-        }
-
-        .btn-secondary {
-            background-color: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-color);
-        }
-
-        .btn-secondary:hover {
-            background-color: var(--border);
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .game-layout {
-            display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .game-layout {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .scoreboard-head {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 12px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 8px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 8px 12px;
-            text-align: center;
-            border-bottom: 1px solid var(--border);
-        }
-
-        th {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-        }
-
-        .pill-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-
-        .pill {
-            flex: 1;
-            padding: 10px;
-            background-color: var(--bg-color);
-            border: 1px solid var(--border);
-            color: var(--text-color);
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            text-align: center;
-            transition: all 0.2s;
-        }
-
-        .pill.active {
-            background-color: var(--accent);
-            color: #0f172a;
-            border-color: var(--accent);
-        }
-
-        .pill.quad.active {
-            background-color: var(--quad-color);
-            color: #fff;
-            border-color: var(--quad-color);
-        }
-
-        .number-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .num-btn {
-            background-color: var(--bg-color);
-            border: 1px solid var(--border);
-            color: var(--text-color);
-            padding: 14px 0;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.1s;
-        }
-
-        .num-btn:hover {
-            border-color: var(--accent);
-        }
-
-        .announcement {
-            padding: 12px;
-            border-radius: 8px;
-            background-color: var(--bg-color);
-            border: 1px solid var(--border);
-            margin-bottom: 16px;
-            font-size: 0.95rem;
-            min-height: 24px;
-        }
-
-        .controls-row {
-            display: flex;
-            gap: 10px;
-        }
-    </style>
+    @media (max-width: 900px) {
+      .layout, .game-shell { grid-template-columns: 1fr; }
+      .player-inputs { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Pool Darts</h1>
-            <div id="headerStatus">Setup Mode</div>
-        </header>
-
-        <!-- SETUP PANEL -->
-        <div id="setupPanel" class="panel">
-            <h2>Game Setup</h2>
-            <div class="field">
-                <label for="playerCount">Number of Players</label>
-                <select id="playerCount">
-                    <option value="2" selected>2 Players</option>
-                    <option value="3">3 Players</option>
-                    <option value="4">4 Players</option>
-                </select>
-            </div>
-            <div class="field">
-                <label for="boardType">Board Selector</label>
-                <select id="boardType">
-                    <option value="basic" selected>Basic Board (Single / Double / Triple)</option>
-                    <option value="quad">Quad Board (Adds 4x Quad Segment)</option>
-                    <option value="quad-english">Quad Board "English & Spin" (Token Multipliers)</option>
-                </select>
-            </div>
-            <div class="field">
-                <label>Player Names</label>
-                <div id="playerInputsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
-            </div>
-            <button class="btn" id="startBtn">Start Game</button>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand-badge"></div>
+        <div class="brand">
+          <h1>Pool Darts</h1>
+          <p>Close your targets, avoid scratches, and sink the 8 ball after clearing your assigned numbers.</p>
         </div>
+      </div>
+      <div class="status-chip" id="headerStatus">Ready to break</div>
+    </header>
 
-        <!-- GAME AREA -->
-        <div id="gameArea" class="game-layout hidden">
-            <main class="panel">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <div>
-                        <span style="color: var(--text-muted); font-size: 0.85rem;">ROUND</span>
-                        <div id="roundCounter" style="font-size: 1.2rem; font-weight: bold;">1</div>
-                    </div>
-                    <div>
-                        <span style="color: var(--text-muted); font-size: 0.85rem;">DART</span>
-                        <div id="dartCounter" style="font-size: 1.2rem; font-weight: bold;">1 / 3</div>
-                    </div>
-                </div>
+    <main class="layout" id="setupPanel">
+      <section class="panel">
+        <div class="panel-inner">
+          <h2 style="font-family:'Bebas Neue'; font-size: 2.5rem; margin:0 0 16px;">Start Match</h2>
+          
+          <div class="field">
+            <label for="playerCount">Number of Players</label>
+            <select id="playerCount">
+              <option value="2" selected>2 Players</option>
+              <option value="3">3 Players</option>
+              <option value="4">4 Players</option>
+            </select>
+          </div>
 
-                <div class="announcement" id="announcement">Game started! Throw your darts.</div>
+          <div class="field">
+            <label for="boardType">Board Selector</label>
+            <select id="boardType">
+              <option value="basic" selected>Basic Board (Single / Double / Triple)</option>
+              <option value="quad">Quad Board (Adds 4x Quad Segment)</option>
+            </select>
+          </div>
 
-                <label>Multiplier</label>
-                <div class="pill-row" id="multiplierRow">
-                    <button class="pill active" data-mult="1">Single</button>
-                    <button class="pill" data-mult="2">Double</button>
-                    <button class="pill" data-mult="3">Triple</button>
-                    <button class="pill" id="missBtn" data-mult="0" style="color: var(--danger);">Miss</button>
-                </div>
+          <div class="field">
+            <label>Player Names</label>
+            <div class="player-inputs" id="playerInputsContainer">
+              <!-- Player inputs rendered dynamically -->
+            </div>
+          </div>
 
-                <label>Target Segment</label>
-                <div class="number-grid" id="numberButtons"></div>
-
-                <div class="controls-row">
-                    <button class="btn btn-secondary" id="undoBtn">Undo</button>
-                    <button class="btn btn-secondary" id="newGameBtn">New Game</button>
-                </div>
-            </main>
-
-            <aside class="panel">
-                <div class="scoreboard-head">Scoreboard</div>
-                <div style="overflow-x: auto;">
-                    <table aria-label="Pool Darts scoreboard">
-                        <thead>
-                            <tr id="scoreHeaderRow"></tr>
-                        </thead>
-                        <tbody id="scoreRows"></tbody>
-                    </table>
-                </div>
-                <div class="turn-indicator" id="turnIndicator" style="margin-top: 12px; font-weight: 700;"></div>
-            </aside>
+          <div class="actions">
+            <button class="btn-primary" id="startBtn">Start Game</button>
+          </div>
         </div>
-    </div>
+      </section>
 
-    <script>
-        const allTargets = [...Array.from({length: 20}, (_, i) => i + 1), "BULL"];
+      <aside class="panel">
+        <div class="panel-inner">
+          <div class="scoreboard-head">
+            <h3>Rules & Target Distribution</h3>
+          </div>
+          <p class="rule"><strong>2 Players:</strong> Player 1 (1–10), Player 2 (11–20).</p>
+          <p class="rule"><strong>3 Players:</strong> P1 (1–6), P2 (7–13), P3 (14–20).</p>
+          <p class="rule"><strong>4 Players:</strong> P1 (1–5), P2 (6–10), P3 (11–15), P4 (16–20).</p>
+          <p class="rule"><strong>Bullseye:</strong> The 8 ball. Closing it before clearing assigned targets results in a loss.</p>
+          <p class="rule"><strong>Scratch:</strong> Hitting another player's assigned target ends your turn immediately.</p>
+        </div>
+      </aside>
+    </main>
 
-        const state = {
-            players: [],
-            targets: [],
-            marks: [],
-            cueTokens: [],
-            currentPlayer: 0,
-            dart: 1,
-            round: 1,
-            multiplier: 1,
-            boardType: 'basic',
-            gameStarted: false,
-            gameOver: false,
-            history: []
-        };
+    <section class="game-shell hidden" id="gameArea">
+      <div class="game-left">
+        <section class="panel">
+          <div class="panel-inner">
+            <div class="meta-strip">
+              <div class="meta">
+                <span class="k">Current Player</span>
+                <span class="v" id="currentPlayerName">Player 1</span>
+              </div>
+              <div class="meta">
+                <span class="k">Round</span>
+                <span class="v" id="roundCounter">1</span>
+              </div>
+              <div class="meta">
+                <span class="k">Dart</span>
+                <span class="v" id="dartCounter">1 / 3</span>
+              </div>
+              <div class="meta">
+                <span class="k">Selected</span>
+                <span class="v" id="selectedMultiplier">Single</span>
+              </div>
+            </div>
 
-        const els = {
-            setupPanel: document.getElementById("setupPanel"),
-            gameArea: document.getElementById("gameArea"),
-            playerCount: document.getElementById("playerCount"),
-            boardType: document.getElementById("boardType"),
-            playerInputsContainer: document.getElementById("playerInputsContainer"),
-            startBtn: document.getElementById("startBtn"),
-            roundCounter: document.getElementById("roundCounter"),
-            dartCounter: document.getElementById("dartCounter"),
-            multiplierRow: document.getElementById("multiplierRow"),
-            numberButtons: document.getElementById("numberButtons"),
-            scoreHeaderRow: document.getElementById("scoreHeaderRow"),
-            scoreRows: document.getElementById("scoreRows"),
-            turnIndicator: document.getElementById("turnIndicator"),
-            announcement: document.getElementById("announcement"),
-            headerStatus: document.getElementById("headerStatus"),
-            undoBtn: document.getElementById("undoBtn"),
-            newGameBtn: document.getElementById("newGameBtn"),
-            missBtn: document.getElementById("missBtn")
-        };
+            <div class="multiplier-row" id="multiplierRow" role="group" aria-label="Multiplier selection">
+              <button class="pill active" data-mult="1">Single</button>
+              <button class="pill" data-mult="2">Double</button>
+              <button class="pill" data-mult="3">Triple</button>
+              <!-- Quad button appended dynamically when Quad Board is selected -->
+              <button class="pill danger" id="missBtn">Miss</button>
+            </div>
 
-        function generatePlayerInputs() {
-            const count = parseInt(els.playerCount.value, 10);
-            els.playerInputsContainer.innerHTML = "";
-            for (let i = 1; i <= count; i++) {
-                const input = document.createElement("input");
-                input.type = "text";
-                input.id = `player${i}`;
-                input.placeholder = `Player ${i} Name`;
-                input.value = `Player ${i}`;
-                input.maxLength = 20;
-                els.playerInputsContainer.appendChild(input);
-            }
-        }
+            <div class="numbers" id="numberButtons" aria-label="Target buttons"></div>
 
-        els.playerCount.addEventListener("change", generatePlayerInputs);
-        generatePlayerInputs();
+            <div class="bottom-actions">
+              <button class="btn-secondary" id="undoBtn">Undo</button>
+              <button class="btn-secondary success" id="nextTurnBtn">End Turn</button>
+              <button class="btn-secondary danger" id="newGameBtn">New Game</button>
+            </div>
 
-        function calculateTargetRanges(numPlayers) {
-            if (numPlayers === 2) {
-                return [
-                    [...Array.from({length: 10}, (_, i) => i + 1)],
-                    [...Array.from({length: 10}, (_, i) => i + 11)]
-                ];
-            } else if (numPlayers === 3) {
-                return [
-                    [1, 2, 3, 4, 5, 6, 7],
-                    [8, 9, 10, 11, 12, 13],
-                    [14, 15, 16, 17, 18, 19, 20, "BULL"]
-                ];
-            } else {
-                return [
-                    [1, 2, 3, 4, 5],
-                    [6, 7, 8, 9, 10],
-                    [11, 12, 13, 14, 15],
-                    [16, 17, 18, 19, 20, "BULL"]
-                ];
-            }
-        }
+            <div class="announce" id="announcement">Game in progress...</div>
+          </div>
+        </section>
+      </div>
 
-        function startGame() {
-            const count = parseInt(els.playerCount.value, 10);
-            state.players = [];
-            for (let i = 1; i <= count; i++) {
-                const val = document.getElementById(`player${i}`).value.trim();
-                state.players.push(val || `Player ${i}`);
-            }
+      <aside class="panel">
+        <div class="panel-inner">
+          <div class="scoreboard-head">
+            <h3>Scoreboard</h3>
+          </div>
+          <div style="overflow-x:auto;">
+            <table aria-label="Pool Darts scoreboard">
+              <thead>
+                <tr id="scoreHeaderRow"></tr>
+              </thead>
+              <tbody id="scoreRows"></tbody>
+            </table>
+          </div>
+          <div class="turn-indicator" id="turnIndicator" style="margin-top:12px; font-weight:700;"></div>
+        </div>
+      </aside>
+    </section>
+  </div>
 
-            state.boardType = els.boardType.value;
-            state.targets = calculateTargetRanges(state.players.length);
-            state.marks = state.players.map(() => {
-                const playerMarks = {};
-                allTargets.forEach(t => playerMarks[t] = 0);
-                return playerMarks;
-            });
+  <script>
+    const state = {
+      players: [],
+      targets: [],
+      marks: [],
+      currentPlayer: 0,
+      dart: 1,
+      round: 1,
+      multiplier: 1,
+      boardType: 'basic',
+      gameStarted: false,
+      gameOver: false,
+      history: []
+    };
 
-            if (state.boardType === 'quad-english') {
-                state.cueTokens = state.players.map(() => 0);
-            } else {
-                state.cueTokens = [];
-            }
+    const allTargets = [...Array.from({ length: 20 }, (_, i) => i + 1), "BULL"];
 
-            state.currentPlayer = 0;
-            state.dart = 1;
-            state.round = 1;
-            state.multiplier = 1;
-            state.gameStarted = true;
-            state.gameOver = false;
-            state.history = [];
+    const els = {
+      setupPanel: document.getElementById("setupPanel"),
+      gameArea: document.getElementById("gameArea"),
+      playerCount: document.getElementById("playerCount"),
+      boardType: document.getElementById("boardType"),
+      playerInputsContainer: document.getElementById("playerInputsContainer"),
+      startBtn: document.getElementById("startBtn"),
+      currentPlayerName: document.getElementById("currentPlayerName"),
+      roundCounter: document.getElementById("roundCounter"),
+      dartCounter: document.getElementById("dartCounter"),
+      selectedMultiplier: document.getElementById("selectedMultiplier"),
+      multiplierRow: document.getElementById("multiplierRow"),
+      numberButtons: document.getElementById("numberButtons"),
+      scoreHeaderRow: document.getElementById("scoreHeaderRow"),
+      scoreRows: document.getElementById("scoreRows"),
+      turnIndicator: document.getElementById("turnIndicator"),
+      announcement: document.getElementById("announcement"),
+      headerStatus: document.getElementById("headerStatus"),
+      undoBtn: document.getElementById("undoBtn"),
+      newGameBtn: document.getElementById("newGameBtn"),
+      nextTurnBtn: document.getElementById("nextTurnBtn"),
+      missBtn: document.getElementById("missBtn")
+    };
 
-            els.setupPanel.classList.add("hidden");
-            els.gameArea.classList.remove("hidden");
-            els.headerStatus.textContent = "Game in Progress";
+    function generatePlayerInputs() {
+      const count = parseInt(els.playerCount.value, 10);
+      els.playerInputsContainer.innerHTML = "";
+      for (let i = 1; i <= count; i++) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.id = `player${i}`;
+        input.placeholder = `Player ${i} Name`;
+        input.value = `Player ${i}`;
+        input.maxLength = 20;
+        els.playerInputsContainer.appendChild(input);
+      }
+    }
 
-            buildMultiplierButtons();
-            buildNumberButtons();
-            updateUI();
-        }
+    els.playerCount.addEventListener("change", generatePlayerInputs);
+    generatePlayerInputs();
 
-        function buildMultiplierButtons() {
-            els.multiplierRow.innerHTML = `
-                <button class="pill active" data-mult="1">Single</button>
-                <button class="pill" data-mult="2">Double</button>
-                <button class="pill" data-mult="3">Triple</button>
-            `;
-            if (state.boardType === 'quad' || state.boardType === 'quad-english') {
-                const quadBtn = document.createElement('button');
-                quadBtn.className = 'pill quad';
-                quadBtn.dataset.mult = '4';
-                quadBtn.textContent = 'Quad (4x)';
-                els.multiplierRow.appendChild(quadBtn);
-            }
-            els.multiplierRow.appendChild(els.missBtn);
+    function calculateTargetRanges(numPlayers) {
+      if (numPlayers === 2) {
+        return [
+          Array.from({ length: 10 }, (_, i) => i + 1),  // 1-10
+          Array.from({ length: 10 }, (_, i) => i + 11) // 11-20
+        ];
+      } else if (numPlayers === 3) {
+        return [
+          Array.from({ length: 6 }, (_, i) => i + 1),  // 1-6
+          Array.from({ length: 7 }, (_, i) => i + 7),  // 7-13
+          Array.from({ length: 7 }, (_, i) => i + 14)  // 14-20
+        ];
+      } else if (numPlayers === 4) {
+        return [
+          Array.from({ length: 5 }, (_, i) => i + 1),  // 1-5
+          Array.from({ length: 5 }, (_, i) => i + 6),  // 6-10
+          Array.from({ length: 5 }, (_, i) => i + 11), // 11-15
+          Array.from({ length: 5 }, (_, i) => i + 16)  // 16-20
+        ];
+      }
+    }
 
-            document.querySelectorAll("[data-mult]").forEach(btn => {
-                btn.addEventListener("click", () => setMultiplier(Number(btn.dataset.mult)));
-            });
-        }
+    function buildMultiplierButtons() {
+      els.multiplierRow.innerHTML = `
+        <button class="pill active" data-mult="1">Single</button>
+        <button class="pill" data-mult="2">Double</button>
+        <button class="pill" data-mult="3">Triple</button>
+      `;
 
-        function buildNumberButtons() {
-            els.numberButtons.innerHTML = "";
-            allTargets.forEach(target => {
-                const btn = document.createElement("button");
-                btn.className = "num-btn";
-                btn.textContent = target;
-                btn.addEventListener("click", () => recordHit(target));
-                els.numberButtons.appendChild(btn);
-            });
-        }
+      if (state.boardType === 'quad') {
+        const quadBtn = document.createElement('button');
+        quadBtn.className = 'pill quad';
+        quadBtn.dataset.mult = '4';
+        quadBtn.textContent = 'Quad (4x)';
+        els.multiplierRow.appendChild(quadBtn);
+      }
 
-        function setMultiplier(mult) {
-            state.multiplier = mult;
-            document.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
-            const activeBtn = document.querySelector(`[data-mult="${mult}"]`);
-            if (activeBtn) activeBtn.classList.add("active");
-        }
+      els.multiplierRow.appendChild(els.missBtn);
 
-        function recordHit(target) {
-            if (state.gameOver) return;
+      document.querySelectorAll("[data-mult]").forEach(btn => {
+        btn.addEventListener("click", () => setMultiplier(Number(btn.dataset.mult)));
+      });
+    }
 
-            // Save state snapshot for undo
-            state.history.push({
-                marks: JSON.parse(JSON.stringify(state.marks)),
-                cueTokens: [...state.cueTokens],
-                currentPlayer: state.currentPlayer,
-                dart: state.dart,
-                round: state.round
-            });
+    function buildNumberButtons() {
+      els.numberButtons.innerHTML = "";
+      for (let i = 1; i <= 20; i++) {
+        const btn = document.createElement("button");
+        btn.className = "num-btn";
+        btn.textContent = i;
+        btn.addEventListener("click", () => recordHit(i));
+        els.numberButtons.appendChild(btn);
+      }
+      const bull = document.createElement("button");
+      bull.className = "num-btn special";
+      bull.textContent = "Bull (8 Ball)";
+      bull.addEventListener("click", () => recordHit("BULL"));
+      els.numberButtons.appendChild(bull);
+    }
 
-            const player = state.currentPlayer;
-            const assignedRange = state.targets[player];
-            const isAssigned = assignedRange.includes(target);
+    function markSymbol(count) {
+      if (count >= 3) return "O";
+      if (count === 2) return "X";
+      if (count === 1) return "/";
+      return "-";
+    }
 
-            if (state.multiplier === 0) {
-                setAnnouncement(`${state.players[player]} missed dart ${state.dart}.`);
-            } else if (!isAssigned) {
-                setAnnouncement(`${target} is not in your assigned target pool! No marks awarded.`);
-            } else {
-                const before = state.marks[player][target];
-                const potentialMarks = before + state.multiplier;
-                const actualMarks = Math.min(3, potentialMarks);
+    function updateScoreboard() {
+      // Build Table Header
+      els.scoreHeaderRow.innerHTML = "<th>Target</th>";
+      state.players.forEach(p => {
+        const th = document.createElement("th");
+        th.textContent = p;
+        els.scoreHeaderRow.appendChild(th);
+      });
 
-                state.marks[player][target] = actualMarks;
+      // Build Table Rows (1 to 20 + Bull)
+      els.scoreRows.innerHTML = "";
+      allTargets.forEach(target => {
+        const tr = document.createElement("tr");
+        const targetTd = document.createElement("td");
+        targetTd.className = "target-col";
+        targetTd.textContent = target === "BULL" ? "Bull (8 Ball)" : target;
+        tr.appendChild(targetTd);
 
-                let tokenMessage = "";
-                if (state.boardType === 'quad-english' && state.multiplier === 4 && potentialMarks > 3) {
-                    const overflow = potentialMarks - 3;
-                    state.cueTokens[player] += overflow;
-                    tokenMessage = ` (+${overflow} Cue Token earned!)`;
-                }
-
-                if (actualMarks >= 3 && before < 3) {
-                    setAnnouncement(`${state.players[player]} closed target ${target}!${tokenMessage}`, "good");
-                } else {
-                    setAnnouncement(`${state.players[player]} marked target ${target} (${actualMarks}/3).${tokenMessage}`);
-                }
-            }
-
-            checkWinCondition();
-            if (!state.gameOver) {
-                advanceTurn();
-            }
-            updateUI();
-        }
-
-        function advanceTurn() {
-            state.dart++;
-            if (state.dart > 3) {
-                state.dart = 1;
-                state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
-                if (state.currentPlayer === 0) {
-                    state.round++;
-                }
-            }
-            setMultiplier(1);
-        }
-
-        function setAnnouncement(msg) {
-            els.announcement.textContent = msg;
-        }
-
-        function checkWinCondition() {
-            for (let i = 0; i < state.players.length; i++) {
-                const targets = state.targets[i];
-                const allClosed = targets.every(t => state.marks[i][t] >= 3);
-                if (allClosed) {
-                    state.gameOver = true;
-                    setAnnouncement(`🏆 ${state.players[i]} has closed all targets and won the game!`);
-                    els.headerStatus.textContent = "Game Over";
-                    break;
-                }
-            }
-        }
-
-        function updateUI() {
-            els.roundCounter.textContent = state.round;
-            els.dartCounter.textContent = `${state.dart} / 3`;
-
-            // Scoreboard Header
-            els.scoreHeaderRow.innerHTML = `<th>Target</th>` + state.players.map((p, idx) => {
-                let tokenSub = "";
-                if (state.boardType === 'quad-english') {
-                    tokenSub = `<br><span style="font-size:0.75rem; color:var(--quad-color);">Tokens: ${state.cueTokens[idx] || 0}</span>`;
-                }
-                return `<th>${p}${tokenSub}</th>`;
-            }).join("");
-
-            // Scoreboard Rows
-            els.scoreRows.innerHTML = "";
-            allTargets.forEach(target => {
-                const tr = document.createElement("tr");
-                let html = `<td style="font-weight: bold;">${target}</td>`;
-                state.players.forEach((_, pIdx) => {
-                    const isAssigned = state.targets[pIdx].includes(target);
-                    const markCount = state.marks[pIdx][target];
-                    let displayMark = "";
-                    if (markCount === 1) displayMark = "/";
-                    else if (markCount === 2) displayMark = "X";
-                    else if (markCount === 3) displayMark = "⦼";
-
-                    const style = isAssigned ? "" : "color: var(--text-muted); opacity: 0.4;";
-                    html += `<td style="${style}">${displayMark}</td>`;
-                });
-                tr.innerHTML = html;
-                els.scoreRows.appendChild(tr);
-            });
-
-            let tokenDisplay = "";
-            if (state.boardType === 'quad-english') {
-                tokenDisplay = ` | Cue Tokens: ${state.cueTokens[state.currentPlayer] || 0}`;
-            }
-            els.turnIndicator.textContent = state.gameOver ? "Game Finished" : `${state.players[state.currentPlayer]}'s Turn (Dart ${state.dart})${tokenDisplay}`;
-        }
-
-        els.startBtn.addEventListener("click", startGame);
-
-        els.undoBtn.addEventListener("click", () => {
-            if (state.history.length === 0) return;
-            const lastState = state.history.pop();
-            state.marks = lastState.marks;
-            state.cueTokens = lastState.cueTokens;
-            state.currentPlayer = lastState.currentPlayer;
-            state.dart = lastState.dart;
-            state.round = lastState.round;
-            state.gameOver = false;
-            setMultiplier(1);
-            setAnnouncement("Undo executed.");
-            els.headerStatus.textContent = "Game in Progress";
-            updateUI();
+        state.players.forEach((_, pIndex) => {
+          const td = document.createElement("td");
+          td.className = "marks";
+          
+          const isAssigned = state.targets[pIndex].includes(target) || target === "BULL";
+          if (isAssigned) {
+            td.textContent = markSymbol(state.marks[pIndex][target]);
+          } else {
+            td.textContent = "—";
+            td.style.opacity = "0.3";
+          }
+          tr.appendChild(td);
         });
+        els.scoreRows.appendChild(tr);
+      });
+    }
 
-        els.newGameBtn.addEventListener("click", () => {
-            els.gameArea.classList.add("hidden");
-            els.setupPanel.classList.remove("hidden");
-            els.headerStatus.textContent = "Setup Mode";
-        });
-    </script>
+    function updateMeta() {
+      const cp = state.currentPlayer;
+      els.currentPlayerName.textContent = state.players[cp];
+      els.roundCounter.textContent = state.round;
+      els.dartCounter.textContent = `${state.dart} / 3`;
+      
+      const multNames = { 1: "Single", 2: "Double", 3: "Triple", 4: "Quad (4x)" };
+      els.selectedMultiplier.textContent = multNames[state.multiplier] || "Single";
+      
+      els.turnIndicator.textContent = `${state.players[cp]}'s Turn`;
+      els.headerStatus.textContent = state.gameOver ? "Game Over" : `${state.players[cp]}'s turn`;
+    }
+
+    function setAnnouncement(message, kind = "") {
+      els.announcement.textContent = message;
+      els.announcement.className = "announce" + (kind ? ` ${kind}` : "");
+    }
+
+    function setMultiplier(mult) {
+      state.multiplier = mult;
+      document.querySelectorAll("[data-mult]").forEach(btn => {
+        btn.classList.toggle("active", Number(btn.dataset.mult) === mult);
+      });
+      updateMeta();
+    }
+
+    function isPlayersOwnTarget(playerIndex, target) {
+      if (target === "BULL") return true;
+      return state.targets[playerIndex].includes(target);
+    }
+
+    function allNumbersClosed(playerIndex) {
+      return state.targets[playerIndex].every(target => state.marks[playerIndex][target] >= 3);
+    }
+
+    function advanceDart() {
+      if (state.gameOver) return;
+      if (state.dart >= 3) {
+        endTurn();
+      } else {
+        state.dart += 1;
+        updateMeta();
+      }
+    }
+
+    function endTurn(isScratch = false) {
+      state.dart = 1;
+      state.multiplier = 1;
+      setMultiplier(1);
+      
+      state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
+      if (state.currentPlayer === 0) {
+        state.round += 1;
+      }
+      
+      updateMeta();
+      if (!isScratch) {
+        setAnnouncement(`Turn ended. ${state.players[state.currentPlayer]} is up!`);
+      }
+    }
+
+    function winGame(winnerIndex, reason) {
+      state.gameOver = true;
+      updateMeta();
+      setAnnouncement(`${state.players[winnerIndex]} wins — ${reason}!`, "good");
+    }
+
+    function recordHit(target) {
+      if (!state.gameStarted || state.gameOver) return;
+
+      // Save history snapshot for Undo
+      state.history.push(JSON.stringify({
+        marks: state.marks,
+        currentPlayer: state.currentPlayer,
+        dart: state.dart,
+        round: state.round,
+        multiplier: state.multiplier,
+        gameOver: state.gameOver
+      }));
+
+      const player = state.currentPlayer;
+
+      if (target === "BULL") {
+        if (!allNumbersClosed(player)) {
+          winGame((player + 1) % state.players.length, `${state.players[player]} hit the 8 ball before clearing assigned numbers`);
+          return;
+        }
+        state.marks[player]["BULL"] = Math.min(3, state.marks[player]["BULL"] + state.multiplier);
+        updateScoreboard();
+        updateMeta();
+        
+        if (state.marks[player]["BULL"] >= 3) {
+          winGame(player, "sunk the 8 ball");
+          return;
+        }
+        setAnnouncement(`${state.players[player]} hit the 8 ball!`, "good");
+        advanceDart();
+        return;
+      }
+
+      if (!isPlayersOwnTarget(player, target)) {
+        setAnnouncement(`Scratch! ${state.players[player]} hit target ${target}, which is not theirs. Turn over!`, "warn");
+        endTurn(true);
+        return;
+      }
+
+      const before = state.marks[player][target];
+      state.marks[player][target] = Math.min(3, before + state.multiplier);
+      
+      if (state.marks[player][target] >= 3 && before < 3) {
+        setAnnouncement(`${state.players[player]} closed target ${target}!`, "good");
+      } else {
+        setAnnouncement(`${state.players[player]} marked target ${target}.`);
+      }
+
+      updateScoreboard();
+      updateMeta();
+      advanceDart();
+    }
+
+    els.missBtn.addEventListener("click", () => {
+      if (!state.gameStarted || state.gameOver) return;
+      setAnnouncement(`${state.players[state.currentPlayer]} missed.`);
+      advanceDart();
+    });
+
+    els.startBtn.addEventListener("click", () => {
+      const count = parseInt(els.playerCount.value, 10);
+      state.players = [];
+      for (let i = 1; i <= count; i++) {
+        const nameVal = document.getElementById(`player${i}`).value.trim();
+        state.players.push(nameVal || `Player ${i}`);
+      }
+
+      state.boardType = els.boardType.value;
+      state.targets = calculateTargetRanges(state.players.length);
+      state.marks = state.players.map(() => {
+        const playerMarks = {};
+        allTargets.forEach(t => playerMarks[t] = 0);
+        return playerMarks;
+      });
+
+      state.currentPlayer = 0;
+      state.dart = 1;
+      state.round = 1;
+      state.multiplier = 1;
+      state.gameStarted = true;
+      state.gameOver = false;
+      state.history = [];
+
+      buildMultiplierButtons();
+      buildNumberButtons();
+      updateScoreboard();
+      updateMeta();
+
+      els.setupPanel.classList.add("hidden");
+      els.gameArea.classList.remove("hidden");
+      setAnnouncement("Game started. Call your shots!");
+    });
+
+    els.nextTurnBtn.addEventListener("click", () => {
+      if (!state.gameStarted || state.gameOver) return;
+      endTurn();
+    });
+
+    els.newGameBtn.addEventListener("click", () => {
+      if (confirm("Are you sure you want to exit and start a new game?")) {
+        state.gameStarted = false;
+        els.gameArea.classList.add("hidden");
+        els.setupPanel.classList.remove("hidden");
+      }
+    });
+
+    els.undoBtn.addEventListener("click", () => {
+      if (state.history.length === 0) return;
+      const lastState = JSON.parse(state.history.pop());
+      state.marks = lastState.marks;
+      state.currentPlayer = lastState.currentPlayer;
+      state.dart = lastState.dart;
+      state.round = lastState.round;
+      state.multiplier = lastState.multiplier;
+      state.gameOver = lastState.gameOver;
+
+      updateScoreboard();
+      updateMeta();
+      setMultiplier(state.multiplier);
+      setAnnouncement("Action undone.");
+    });
+  </script>
 </body>
 </html>
