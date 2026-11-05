@@ -490,24 +490,39 @@ function handleBullHit(player) {
 
       const player = state.currentPlayer;
 
-      if (target === "BULL") {
-        if (!allNumbersClosed(player)) {
-          winGame((player + 1) % state.players.length, `${state.players[player]} hit the 8 ball before clearing assigned numbers`);
-          return;
+     if (target === "BULL") {
+        // Check if it's a 3 or 4 player game
+        const isThreeOrFourPlayer = state.players.length >= 3 && state.players.length <= 4;
+
+        if (isThreeOrFourPlayer && !allNumbersClosed(player)) {
+            // Mark this player as eliminated (you can track eliminated players or handle turn skipping)
+            state.marks[player]["ELIMINATED"] = true; // or add an eliminated property/flag
+            
+            setAnnouncement(`${state.players[player]} hit the 8 ball before clearing assigned numbers and is ELIMINATED!`, "warn");
+            
+            // Advance to the next player's turn without ending the whole game
+            advanceDart();
+            return;
         }
+
+        if (!allNumbersClosed(player)) {
+            winGame((player + 1) % state.players.length, `${state.players[player]} hit the 8 ball before clearing assigned numbers`);
+            return;
+        }
+        
         state.marks[player]["BULL"] = Math.min(3, state.marks[player]["BULL"] + state.multiplier);
         updateScoreboard();
         updateMeta();
         
         if (state.marks[player]["BULL"] >= 3) {
-          winGame(player, "sunk the 8 ball");
-          return;
+            winGame(player, "sunk the 8 ball");
+            return;
         }
+        
         setAnnouncement(`${state.players[player]} hit the 8 ball!`, "good");
         advanceDart();
         return;
-      }
-
+    }
       if (!isPlayersOwnTarget(player, target)) {
         setAnnouncement(`Scratch! ${state.players[player]} hit target ${target}, which is not theirs. Turn over!`, "warn");
         endTurn(true);
