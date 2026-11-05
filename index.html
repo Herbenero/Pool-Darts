@@ -447,7 +447,28 @@
         setAnnouncement(`Turn ended. ${state.players[state.currentPlayer]} is up!`);
       }
     }
+function handleBullHit(player) {
+    // Check if it's a 3 or 4 player game
+    const isThreeOrFourPlayer = state.players.length >= 3 && state.players.length <= 4;
+    
+    // Check if all assigned numbers for this player are closed (e.g., hit 3 times or fully marked)
+    const allTargetsClosed = player.assignedNumbers.every(num => state.board[num][player.id] >= 3);
 
+    if (isThreeOrFourPlayer && !allTargetsClosed) {
+        // Eliminated for sinking the 8-ball early!
+        player.eliminated = true;
+        player.roundStatus = 'eliminated';
+        
+        // Show notification message
+        showGameMessage(`${player.name} hit the 8-ball too early and is eliminated! Game continues.`);
+        
+        // Check if only one player remains to end the game, otherwise move to next player
+        checkGameEndCondition();
+    } else {
+        // Normal valid 8-ball win condition or score handling
+        handleValidEightBallWin(player);
+    }
+}
     function winGame(winnerIndex, reason) {
       state.gameOver = true;
       updateMeta();
